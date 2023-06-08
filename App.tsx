@@ -1,118 +1,105 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
+  ActivityIndicator,
+  FlatList,
+  Image,
   SafeAreaView,
-  ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
+import axios from 'axios';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+export default function App() {
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+  const API_KEY = '5059743e77213cead5fc38765fc6457b';
 
-function Section({children, title}: SectionProps): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+  const [movies, setMovies] = useState(null);
+
+  const api = axios.create({
+    baseURL: 'https://api.themoviedb.org/3/movie'
+  });
+
+  useEffect(() => {
+    async function fetchMovies() {
+      try {
+
+        const response = await api.get(`/popular/?api_key=${API_KEY}&language=pt-BR`);
+        setMovies(response.data.results);
+
+      } catch (error) {
+        console.log('Error: ', error);
+      }
+    }
+    fetchMovies();
+  }, []);
+
+  const Item = ({title, description, image}) => (
+    <View style={styles.result}>
+      <Text style={styles.title}>{title}</Text>
+      
+      <Image
+        style={styles.image}
+        source={{uri: image}}
+      />
+
+      <Text style={styles.itemText}>{description}</Text>
     </View>
   );
-}
 
-function App(): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  const renderItem = ({item}) => (
+    <Item title={item.title} description={item.overview} image={`https://image.tmdb.org/t/p/w500${item.poster_path}`} />
+  );
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+    movies ?
+    <SafeAreaView style={styles.container}>
+      <FlatList
+        data={movies}
+        renderItem={renderItem}
+        keyExtractor={item => item.id}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    </SafeAreaView> :
+    <View style={[styles.container, styles.horizontal]}>
+      <ActivityIndicator size="large" />
+    </View>
+
   );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    paddingVertical: 20,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  result: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 8,
   },
-  sectionDescription: {
-    marginTop: 8,
+  title: {
     fontSize: 18,
-    fontWeight: '400',
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
-  highlight: {
-    fontWeight: '700',
+  image: {
+    width: '100%',
+    height: 200,
+    resizeMode: 'contain',
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  itemText: {
+    fontSize: 16,
+  },
+  horizontal: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 10,
   },
 });
-
-export default App;
